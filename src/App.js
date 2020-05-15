@@ -1,5 +1,8 @@
 import React, { Component } from 'react';
 import './App.css';
+import audioPlayX from './audio/play-x.mp3';
+import audioPlayO from './audio/play-o.mp3';
+import audioGameOver from './audio/game-over.mp3';
 
 function Square(props) {  
   return(
@@ -75,6 +78,7 @@ class Game extends Component {
       && this.state.squares.find(el => !el.value)) {
       await new Promise(r => setTimeout(r, 500));
       this.botMove();
+      this.playAudio(audioPlayO);
     }    
   }
 
@@ -86,7 +90,8 @@ class Game extends Component {
       return;      
     }
         
-    squares[i].value = 'X';    
+    squares[i].value = 'X';
+    this.playAudio(audioPlayX);    
     this.setState({
       squares: squares,      
       xIsNext: !this.state.xIsNext,
@@ -99,20 +104,20 @@ class Game extends Component {
     const lines = this.state.lines.slice();
     let squareToMove;    
     
-    console.log('------------------------------------------')    
+    //console.log('------------------------------------------')    
     squareToMove = botWinner(squares, lines);
-    console.log('bot winner', squareToMove);
+    //console.log('bot winner', squareToMove);
     if(squareToMove === null) {
       squareToMove = playerWinner(squares, lines);      
-      console.log('player winner', squareToMove);    
+      //console.log('player winner', squareToMove);    
 
       if(squareToMove === null) {
         squareToMove = bestMove(squares, lines);  
-        console.log('best move', squareToMove);
+        //console.log('best move', squareToMove);
 
         if(squareToMove === null) {
           squareToMove = initialMove(squares);    
-          console.log('initial move', squareToMove);      
+          //console.log('initial move', squareToMove);      
         }
       }        
     }
@@ -124,40 +129,49 @@ class Game extends Component {
     });    
   }
 
-  newGame() {     
+  async newGame() {     
     const winners = calculateWinner(this.state.squares, this.state.lines);
     const score = {
       player: this.state.score.player,
       draw: this.state.score.draw,
       computer: this.state.score.computer,
     };
-
+    
     if(winners) {
-      
-      if(winners.a === 'X') {
-        score.player++;
+            
+      if(this.state.squares[winners.a].value === 'X') {
+        score.player++;        
       } else {
-        score.computer++;
+        score.computer++;        
       }
 
+      await new Promise(r => setTimeout(r, 2000));
       this.setState({
         squares: Array(9).fill(null).map( () => ({value: null, color: 'black'})),
         xIsNext: true,
         score: score,
       });
-      console.clear();      
+      //console.clear();      
     } else {
-      if(!this.state.squares.find(el => !el.value)) {
+      if(!this.state.squares.find(el => !el.value)) {        
         score.draw++;
+        this.playAudio(audioGameOver);
 
-        this.setState({
+        await new Promise(r => setTimeout(r, 2000));
+
+        this.setState({          
           squares: Array(9).fill(null).map( () => ({value: null, color: 'black'})),
           xIsNext: true,
           score: score,
         });
       }
     }  
-  }  
+  } 
+  
+  playAudio(soundFile) {
+    let audio = new Audio(soundFile);
+    audio.play();
+  }
 
   render() {    
     const squares = this.state.squares.slice();    
@@ -171,7 +185,8 @@ class Game extends Component {
     if(winners) {
       squares[winners.a].color = 'red';
       squares[winners.b].color = 'red';
-      squares[winners.c].color = 'red';            
+      squares[winners.c].color = 'red';     
+      this.playAudio(audioGameOver);       
     }         
 
 
@@ -198,7 +213,7 @@ class Game extends Component {
     */
 
     return (
-      <div className="game" onClick={() => this.newGame()}>
+      <div className="game" onClick={() => this.newGame()}>      
         <div>
           <span className="title">You wont'n beat me. But you can try 😬</span>
           <br/>
@@ -221,7 +236,7 @@ class Game extends Component {
             <div>{score.draw}</div>
             <div>{score.computer}</div>
           </div>
-        </div>        
+        </div>               
       </div>
     );
   }
